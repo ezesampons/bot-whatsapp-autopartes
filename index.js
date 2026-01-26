@@ -1,12 +1,18 @@
-
 const express = require("express");
 const app = express();
 
+// Necesario para que Twilio lea los mensajes
 app.use(express.urlencoded({ extended: false }));
+
+// Ruta de prueba
+app.get("/", (req, res) => {
+  res.send("Bot activo 🚀");
+});
 
 // Estado simple en memoria (por ahora)
 const sessions = {};
 
+// Webhook de WhatsApp
 app.post("/whatsapp", (req, res) => {
   const from = req.body.From;
   const msg = req.body.Body?.trim().toLowerCase();
@@ -19,7 +25,6 @@ app.post("/whatsapp", (req, res) => {
   let reply = "";
 
   switch (session.step) {
-
     case "MENU":
       if (msg === "hola") {
         reply = `👋 Bienvenido a AutoPartes Express
@@ -78,38 +83,8 @@ Escribí *hola* para empezar otro pedido.`;
   `);
 });
 
-  const msg = req.body.Body?.trim().toLowerCase();
-
-  let reply = "";
-
-  if (msg === "hola") {
-    reply = `👋 Bienvenido a AutoPartes Express
-
-¿Qué querés hacer?
-1️⃣ Buscar pieza
-2️⃣ Vender una pieza`;
-  } else if (msg === "1") {
-    reply = "🔧 Buscar pieza\n\n(Próximo paso)";
-  } else if (msg === "2") {
-    reply = "🧰 Vender pieza\n\n(Próximo paso)";
-  } else {
-    reply = "❓ No entendí. Escribí *hola* para ver el menú.";
-  }
-
-  res.send(`
-    <Response>
-      <Message>${reply}</Message>
-    </Response>
-  `);
-});
-
-
-app.get("/", (req, res) => {
-  res.send("Bot activo 🚀");
-});
-
+// Puerto correcto para Railway
 const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, () => {
   console.log("Bot corriendo en puerto", PORT);
 });
