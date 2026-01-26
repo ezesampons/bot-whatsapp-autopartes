@@ -1,3 +1,4 @@
+const db = require("./db");
 const express = require("express");
 const app = express();
 
@@ -13,7 +14,8 @@ app.get("/", (req, res) => {
 const sessions = {};
 
 // Webhook de WhatsApp
-app.post("/whatsapp", (req, res) => {
+app.post("/whatsapp", async (req, res) => {
+
   const from = req.body.From;
   const msg = req.body.Body?.trim().toLowerCase();
 
