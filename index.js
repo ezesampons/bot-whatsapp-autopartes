@@ -61,17 +61,41 @@ app.post("/whatsapp", async (req, res) => {
       break;
 
     case "PIEZA":
-      session.pieza = msg;
-      session.step = "MENU";
-      reply = `✅ Pedido recibido:
+  session.pieza = msg;
+
+  console.log("INTENTANDO GUARDAR PEDIDO");
+
+  try {
+    const result = await db.query(
+      `INSERT INTO "PEDIDOS" (telefono, marca, modelo, anio, pieza)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id`,
+      [
+        from,
+        session.marca,
+        session.modelo,
+        session.anio,
+        session.pieza
+      ]
+    );
+
+    console.log("GUARDADO OK, ID:", result.rows[0].id);
+
+    reply = `✅ Pedido guardado correctamente (ID ${result.rows[0].id})
 
 🚗 ${session.marca} ${session.modelo} (${session.anio})
 🔧 Pieza: ${session.pieza}
 
-En breve te enviamos opciones 🙌
+Gracias 🙌
+Escribí *hola* para un nuevo pedido.`;
 
-Escribí *hola* para empezar otro pedido.`;
-      break;
+  } catch (error) {
+    console.error("ERROR AL GUARDAR:", error);
+    reply = "❌ Error guardando el pedido. Revisá los logs.";
+  }
+
+  session.step = "MENU";
+  break;
 
     default:
       session.step = "MENU";
