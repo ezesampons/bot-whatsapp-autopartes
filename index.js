@@ -4,6 +4,9 @@ const app = express();
 
 // Necesario para que Twilio lea los mensajes
 app.use(express.urlencoded({ extended: false }));
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
+});
 
 // Ruta de prueba
 app.get("/", (req, res) => {
