@@ -1,4 +1,4 @@
-const express = require("express");
+// const db = require("./db");
 const db = require("./db");
 
 const app = express();
@@ -66,7 +66,7 @@ app.post("/whatsapp", async (req, res) => {
       break;
 
     case "PIEZA":
-      session.pieza = msg;
+      reply = "Pedido recibido (modo prueba)";
 
       try {
         const result = await db.query(
