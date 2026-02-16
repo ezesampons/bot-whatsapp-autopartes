@@ -6,10 +6,10 @@ console.log("DATABASE_URL existe?", !!process.env.DATABASE_URL);
 
 const app = express();
 
-// Middleware
+// Middleware necesario para Twilio
 app.use(express.urlencoded({ extended: false }));
 
-// Health check (IMPORTANTE para Railway)
+// Health check (MUY importante para Railway)
 app.get("/health", (req, res) => {
   res.status(200).send("OK");
 });
@@ -69,7 +69,7 @@ app.post("/whatsapp", async (req, res) => {
       break;
 
     case "PIEZA":
-      reply = "Pedido recibido (modo prueba)";
+      session.pieza = msg;
 
       try {
         const result = await db.query(
@@ -85,16 +85,17 @@ app.post("/whatsapp", async (req, res) => {
           ]
         );
 
-        reply = `✅ Pedido guardado (ID ${result.rows[0].id})
+        reply = `✅ Pedido guardado correctamente (ID ${result.rows[0].id})
 
 🚗 ${session.marca} ${session.modelo} (${session.anio})
 🔧 Pieza: ${session.pieza}
 
-Gracias 🙌`;
+Gracias 🙌
+Escribí hola para un nuevo pedido.`;
 
       } catch (error) {
         console.error("ERROR DB:", error);
-        reply = "❌ Error guardando pedido.";
+        reply = "❌ Error guardando pedido. Revisá logs.";
       }
 
       session.step = "MENU";
@@ -111,3 +112,11 @@ Gracias 🙌`;
     </Response>
   `);
 });
+
+// IMPORTANTE: Railway usa process.env.PORT
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log("Bot corriendo en puerto", PORT);
+});
+
