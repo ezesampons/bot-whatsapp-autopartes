@@ -1,25 +1,26 @@
-console.log("VERSION NUEVA ACTIVA")
-const db = require("./db");
 const express = require("express");
+const db = require("./db");
+
 const app = express();
 
-// Necesario para que Twilio lea los mensajes
+// Middleware
 app.use(express.urlencoded({ extended: false }));
+
+// Health check (IMPORTANTE para Railway)
 app.get("/health", (req, res) => {
   res.status(200).send("OK");
 });
 
-// Ruta de prueba
+// Ruta raíz
 app.get("/", (req, res) => {
   res.send("Bot activo 🚀");
 });
 
-// Estado simple en memoria (por ahora)
+// Sesiones en memoria
 const sessions = {};
 
-// Webhook de WhatsApp
+// Webhook WhatsApp
 app.post("/whatsapp", async (req, res) => {
-
   const from = req.body.From;
   const msg = req.body.Body?.trim().toLowerCase();
 
@@ -40,16 +41,16 @@ app.post("/whatsapp", async (req, res) => {
 2️⃣ Vender una pieza`;
       } else if (msg === "1") {
         session.step = "MARCA";
-        reply = "🚗 ¿Cuál es la *marca* del vehículo?";
+        reply = "🚗 ¿Cuál es la marca del vehículo?";
       } else {
-        reply = "Escribí *hola* para comenzar.";
+        reply = "Escribí hola para comenzar.";
       }
       break;
 
     case "MARCA":
       session.marca = msg;
       session.step = "MODELO";
-      reply = "🚘 ¿Cuál es el *modelo*?";
+      reply = "🚘 ¿Cuál es el modelo?";
       break;
 
     case "MODELO":
@@ -65,45 +66,40 @@ app.post("/whatsapp", async (req, res) => {
       break;
 
     case "PIEZA":
-  session.pieza = msg;
+      session.pieza = msg;
 
-  console.log("INTENTANDO GUARDAR PEDIDO");
+      try {
+        const result = await db.query(
+          `INSERT INTO "PEDIDOS" (telefono, marca, modelo, anio, pieza)
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING id`,
+          [
+            from,
+            session.marca,
+            session.modelo,
+            session.anio,
+            session.pieza
+          ]
+        );
 
-  try {
-    const result = await db.query(
-      `INSERT INTO "PEDIDOS" (telefono, marca, modelo, anio, pieza)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id`,
-      [
-        from,
-        session.marca,
-        session.modelo,
-        session.anio,
-        session.pieza
-      ]
-    );
-
-    console.log("GUARDADO OK, ID:", result.rows[0].id);
-
-    reply = `✅ Pedido guardado correctamente (ID ${result.rows[0].id})
+        reply = `✅ Pedido guardado (ID ${result.rows[0].id})
 
 🚗 ${session.marca} ${session.modelo} (${session.anio})
 🔧 Pieza: ${session.pieza}
 
-Gracias 🙌
-Escribí *hola* para un nuevo pedido.`;
+Gracias 🙌`;
 
-  } catch (error) {
-    console.error("ERROR AL GUARDAR:", error);
-    reply = "❌ Error guardando el pedido. Revisá los logs.";
-  }
+      } catch (error) {
+        console.error("ERROR DB:", error);
+        reply = "❌ Error guardando pedido.";
+      }
 
-  session.step = "MENU";
-  break;
+      session.step = "MENU";
+      break;
 
     default:
       session.step = "MENU";
-      reply = "Escribí *hola* para comenzar.";
+      reply = "Escribí hola para comenzar.";
   }
 
   res.send(`
@@ -113,9 +109,9 @@ Escribí *hola* para un nuevo pedido.`;
   `);
 });
 
-// Puerto correcto para Railway
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log("Bot corriendo en puerto", PORT);
-});
+// 👇 MUY IMPORTANTE
+const PORT = process.env.PORT;
 
+app.listen(PORT, "0.0.0.0", () => {
+  console.log("Servidor escuchando en puerto", PORT);
+});
