@@ -1,6 +1,9 @@
 const express = require("express");
 const db = require("./db");
 
+console.log("INICIANDO APP...");
+console.log("DATABASE_URL existe?", !!process.env.DATABASE_URL);
+
 const app = express();
 
 // Middleware
