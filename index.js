@@ -1,3 +1,4 @@
+console.log("VERSION NUEVA ACTIVA")
 const db = require("./db");
 const express = require("express");
 const app = express();
