@@ -5,6 +5,36 @@ console.log("INICIANDO APP...");
 console.log("DATABASE_URL existe?", !!process.env.DATABASE_URL);
 
 const app = express();
+async function initDatabase() {
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS proveedores (
+        id SERIAL PRIMARY KEY,
+        nombre TEXT,
+        telefono TEXT,
+        activo BOOLEAN DEFAULT true
+      );
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS respuestas (
+        id SERIAL PRIMARY KEY,
+        pedido_id INT REFERENCES "PEDIDOS"(id),
+        proveedor_id INT REFERENCES proveedores(id),
+        precio TEXT,
+        mensaje TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    console.log("Tablas verificadas correctamente");
+  } catch (err) {
+    console.error("Error creando tablas:", err);
+  }
+}
+
+// Middleware
+app.use(express.urlencoded({ extended: false }));
 
 // Middleware necesario para Twilio
 app.use(express.urlencoded({ extended: false }));
@@ -119,4 +149,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("Bot corriendo en puerto", PORT);
 });
-
+initDatabase();
